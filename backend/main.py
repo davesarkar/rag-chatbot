@@ -40,6 +40,11 @@ def health_check():
     return {"status": "RAG Chatbot API is running"}
 
 
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 @app.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest):
     try:
@@ -49,6 +54,7 @@ def chat(request: ChatRequest):
         )
         return ChatResponse(reply=result["answer"], sources=result.get("sources", []))
     except Exception as e:
+        logger.error(f"Chat error: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 

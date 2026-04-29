@@ -6,25 +6,25 @@ A conversational AI assistant powered by a LangChain RAG (Retrieval-Augmented Ge
 
 | Layer | Technology |
 |-------|-----------|
-| AI Pipeline | LangChain, RAG, LLM Agents |
+| AI Pipeline | LangChain, RAG |
 | Vector Store | ChromaDB |
-| LLM | OpenAI GPT-3.5-turbo |
+| LLM | Ollama (Llama 3.1) |
+| Embeddings | Ollama (nomic-embed-text) |
 | Backend | Python, FastAPI |
-| Frontend | React.js, Vite |
-| Containerization | Docker, Docker Compose |
+| Frontend | React, TypeScript, Vite |
 
 ## How It Works
 
 ```
 User Question
      ↓
-[Embed Question] → vector representation
+[Embed Question] → vector representation (nomic-embed-text via Ollama)
      ↓
 [ChromaDB] → find top 4 similar document chunks (similarity search)
      ↓
 [LangChain Chain] → combine chunks + history + question into prompt
      ↓
-[OpenAI LLM] → generate grounded response
+[Llama 3.1 via Ollama] → generate grounded response
      ↓
 Answer + Sources returned to user
 ```
@@ -32,55 +32,52 @@ Answer + Sources returned to user
 ## Getting Started
 
 ### Prerequisites
-- Docker & Docker Compose
-- OpenAI API key
+- [Ollama](https://ollama.com/) installed and running locally
+- Node.js & npm
+- Python 3.10+
 
-### Run Locally
+### 1. Pull required Ollama models
 
-1. Clone the repo:
+```bash
+ollama pull llama3.1
+ollama pull nomic-embed-text
+```
+
+### 2. Clone the repo
+
 ```bash
 git clone https://github.com/davesarkar/rag-chatbot.git
 cd rag-chatbot
 ```
 
-2. Set up environment:
-```bash
-cp backend/.env.example backend/.env
-# Add your OPENAI_API_KEY to backend/.env
-```
+### 3. Run the backend
 
-3. Add documents to ingest (optional):
-```bash
-# Drop .txt files into backend/documents/
-```
-
-4. Start everything with Docker:
-```bash
-docker-compose up --build
-```
-
-5. Open http://localhost:3000
-
-6. Ingest documents (if you added any):
-```bash
-curl -X POST http://localhost:8000/ingest
-```
-
-### Run Without Docker
-
-**Backend:**
 ```bash
 cd backend
 pip install -r requirements.txt
-cp .env.example .env   # add your API key
 uvicorn main:app --reload
 ```
 
-**Frontend:**
+### 4. Run the frontend
+
 ```bash
 cd frontend
 npm install
 npm run dev
+```
+
+### 5. Open the app
+
+```
+http://localhost:5173
+```
+
+### 6. Add documents and ingest (optional)
+
+Drop `.txt` files into `backend/documents/`, then run:
+
+```bash
+curl -X POST http://localhost:8000/ingest
 ```
 
 ## Project Structure
@@ -88,15 +85,18 @@ npm run dev
 ```
 rag-chatbot/
 ├── backend/
-│   ├── main.py           # FastAPI routes
-│   ├── rag_pipeline.py   # LangChain RAG logic
+│   ├── main.py                  # FastAPI routes
+│   ├── rag_pipeline_ollama.py   # LangChain RAG logic (Ollama)
+│   ├── rag_pipeline.py          # LangChain RAG logic (OpenAI variant)
+│   ├── documents/               # Drop .txt files here for ingestion
+│   ├── chroma_db/               # Persisted vector store
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── frontend/
 │   ├── src/
-│   │   ├── App.jsx
+│   │   ├── App.tsx
 │   │   └── components/
-│   │       └── ChatWindow.jsx
+│   │       └── ChatWindow.tsx
 │   ├── package.json
 │   └── Dockerfile
 ├── docker-compose.yml
